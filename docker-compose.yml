@@ -7,3 +7,6 @@ services:
       - "traefik.http.services.rust-app.loadbalancer.server.port=${PORT}"
     networks:
       - proxy
+networks:
+  proxy:
+    external: true
