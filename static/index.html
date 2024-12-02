@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Ihor Andrianov - Full Stack Developer</title>
+        <style>
+            :root {
+                --primary: rgb(183, 218, 201);
+                --background: rgb(18, 23, 21);
+                --secondary: rgba(183, 218, 201, 0.1);
+                --spacing-xs: clamp(1rem, 2vw, 1.5rem);
+                --spacing-s: clamp(2rem, 3vw, 3rem);
+                --spacing-m: clamp(3rem, 5vw, 5rem);
+                --spacing-l: clamp(5rem, 8vw, 8rem);
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family:
+                    "Inter",
+                    -apple-system,
+                    system-ui,
+                    sans-serif;
+                line-height: 1.7;
+                color: var(--primary);
+                background: var(--background);
+                max-width: 800px;
+                margin: 0 auto;
+                padding: var(--spacing-m);
+            }
+
+            h1 {
+                font-size: clamp(2.5rem, 5vw, 3.5rem);
+                font-weight: 700;
+                letter-spacing: -0.03em;
+                margin-bottom: var(--spacing-xs);
+                color: rgb(209, 231, 221);
+            }
+
+            h2 {
+                font-size: clamp(1.5rem, 3vw, 2rem);
+                font-weight: 600;
+                margin-bottom: var(--spacing-s);
+                letter-spacing: -0.02em;
+                color: rgb(209, 231, 221);
+            }
+
+            h3 {
+                font-size: clamp(1.1rem, 2vw, 1.3rem);
+                margin-bottom: var(--spacing-xs);
+                font-weight: 600;
+                color: rgb(209, 231, 221);
+            }
+
+            p {
+                margin-bottom: var(--spacing-s);
+                max-width: 65ch;
+                opacity: 0.9;
+            }
+
+            header {
+                padding: var(--spacing-l) 0;
+                margin-bottom: var(--spacing-l);
+            }
+
+            section {
+                margin-bottom: var(--spacing-l);
+                padding: var(--spacing-m) 0;
+                border-top: 1px solid var(--secondary);
+            }
+
+            .skills-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: var(--spacing-s);
+                margin-top: var(--spacing-s);
+            }
+
+            .skills-grid div {
+                padding: var(--spacing-xs);
+                background: var(--secondary);
+                border-radius: 4px;
+            }
+
+            .skills-grid strong {
+                display: block;
+                margin-bottom: var(--spacing-xs);
+                color: rgb(209, 231, 221);
+            }
+
+            .project {
+                margin-bottom: var(--spacing-m);
+            }
+
+            .contact {
+                text-align: center;
+                margin-top: var(--spacing-l);
+                padding-top: var(--spacing-m);
+                border-top: 1px solid var(--secondary);
+            }
+
+            a {
+                color: rgb(209, 231, 221);
+                text-decoration: none;
+                border-bottom: 1px solid var(--secondary);
+            }
+
+            a:hover {
+                border-color: var(--primary);
+            }
+
+            .contact a {
+                margin: 0 var(--spacing-xs);
+            }
+
+            @media (max-width: 768px) {
+                body {
+                    padding: var(--spacing-s);
+                }
+                .skills-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Ihor Andrianov</h1>
+            <p>Full Stack Developer | System Architecture Enthusiast</p>
+        </header>
+
+        <section>
+            <h2>About</h2>
+            <p>
+                Full Stack Developer merging technical expertise with medical
+                domain knowledge. Specialized in building scalable web
+                applications using Node.js and React, with a passion for system
+                design and performance optimization. I contribute to greenfield
+                projects in medical, sales, and infrastructure domains,
+                transforming complex requirements into elegant solutions.
+            </p>
+        </section>
+
+        <section>
+            <h2>Skills</h2>
+            <div class="skills-grid">
+                <div>
+                    <strong>Core Languages</strong>
+                    <p>JavaScript, TypeScript, Rust, Go</p>
+                </div>
+                <div>
+                    <strong>Frontend</strong>
+                    <p>React, SolidJS, Vue, WebGL, ThreeJs</p>
+                </div>
+                <div>
+                    <strong>Backend</strong>
+                    <p>Node.js, NestJS, Fastify, Redis, PostgreSQL</p>
+                </div>
+                <div>
+                    <strong>Infrastructure</strong>
+                    <p>AWS, Docker, ESbuild, Vite, REST, GraphQL</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>Featured Projects</h2>
+            <div class="project">
+                <h3>Sales Automation System</h3>
+                <p>
+                    Engineered a Chrome extension for UpWork job applications,
+                    achieving 40% higher conversion rates and 90% faster
+                    response times. The solution's efficiency eliminated the
+                    need for dedicated sales management.
+                </p>
+            </div>
+            <div class="project">
+                <h3>UK Parking Infrastructure</h3>
+                <p>
+                    Architected a high-performance backend managing 5,000+
+                    parking locations. Implemented geospatial optimization with
+                    PostGIS and designed Redis-powered asynchronous task queues
+                    for enhanced system reliability.
+                </p>
+            </div>
+            <div class="project">
+                <h3>3D Product Configurator</h3>
+                <p>
+                    Developed an intuitive Three.js-based neon sign design tool,
+                    resulting in 20% higher user engagement and improved
+                    customer satisfaction through real-time visualization.
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Innovation Lab</h2>
+            <div class="project">
+                <h3>Neural Network Explorer</h3>
+                <p>
+                    Exploring neural network implementations and genetic
+                    algorithms using Rust and WebAssembly, focusing on
+                    performance optimization and evolutionary computation.
+                </p>
+            </div>
+            <div class="project">
+                <h3>Custom Database Engine</h3>
+                <p>
+                    Building a key-value store with write-ahead logging (WAL)
+                    and a custom query language. An ongoing exploration of
+                    database internals and optimization techniques.
+                </p>
+            </div>
+            <div class="project">
+                <h3>Modern E-commerce Platform</h3>
+                <p>
+                    Developing a full-stack product catalogue using React,
+                    Next.js, Prisma, and tRPC, focusing on optimal performance
+                    and developer experience.
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <h2>Education</h2>
+            <p>
+                <strong>Medical Doctor</strong> - Odesa National Medical
+                University (2013-2019)
+            </p>
+            <p>
+                <strong>Additional Training:</strong> Full-stack development at
+                Mate-academy, specialized courses in React, Data Science, and
+                English (C1 level)
+            </p>
+        </section>
+
+        <section class="contact">
+            <p>
+                <a href="https://github.com/yourusername">Github</a>
+                <a href="https://andrianov.dev">andrianov.dev</a>
+                <a href="mailto:andrianoia@gmail.com">Email</a>
+                <a href="https://t.me/yourusername">Telegram</a>
+            </p>
+            <p>Ukraine, Odesa</p>
+        </section>
+    </body>
+</html>
