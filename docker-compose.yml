@@ -3,6 +3,8 @@ services:
     build: .
     labels:
       - "traefik.enable=true"
+      - "traefik.http.routers.rust-app.entrypoints=https"
+      - "traefik.http.routers.rust-app.tls=true"
       - "traefik.http.routers.rust-app.rule=Host(`${DOMAIN}`)"
       - "traefik.http.services.rust-app.loadbalancer.server.port=${PORT}"
     networks:
