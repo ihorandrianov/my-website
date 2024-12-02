@@ -5,3 +5,5 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.rust-app.rule=Host(`${DOMAIN}`)"
       - "traefik.http.services.rust-app.loadbalancer.server.port=${PORT}"
+    networks:
+      - proxy
