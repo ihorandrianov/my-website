@@ -27,6 +27,6 @@ jobs:
             git pull origin main
             echo node version: $(node --version)
             cd blog && npm ci && npm run build && cd ..
-            cd ./k8s-configs/rust-server
+            cd /home/ubuntu/k8s-configs/rust-server
             ./deploy.sh
           EOF
