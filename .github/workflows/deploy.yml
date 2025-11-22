@@ -20,11 +20,9 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@79.76.100.73 << 'EOF'
-            export PATH="$HOME/.local/share/fnm:$PATH"
-            eval "$(fnm env)"
             cd ./k8s-configs/rust-server/my-website
             git pull origin main
-            cd blog && npm ci && npm run build && cd ..
+            cd blog && ~/.local/share/fnm/fnm exec npm ci && ~/.local/share/fnm/fnm exec npm run build && cd ..
             cd ..
             ./deploy.sh
           EOF
