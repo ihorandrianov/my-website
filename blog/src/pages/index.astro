@@ -1,17 +1,20 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Scene3DLazy from '../components/Scene3DLazy';
 ---
 
 <BaseLayout title="Ihor Andrianov - Software Engineer" description="Backend engineer specializing in Rust, distributed systems, CQRS/Event Sourcing, and high-performance async processing. Open source contributor to Turso database.">
-  <header class="header">
-    <h1>ihor andrianov</h1>
-    <p class="subtitle">software engineer</p>
-  </header>
+  <div class="page-layout">
+    <div class="main-content">
+      <header class="header">
+        <h1>ihor andrianov</h1>
+        <p class="subtitle">software engineer</p>
+      </header>
 
-  <div class="bio">
+      <div class="bio">
     <p>i'm a backend engineer who loves building things that need to be fast and reliable — distributed systems, async processing pipelines, databases that don't fall over under load.</p>
     <p>most of my work is in rust and node.js. i get excited about event sourcing, query optimization, and making systems handle millions of operations without breaking a sweat.</p>
-    <p>when i'm not at work, i contribute to <a href="https://github.com/tursodatabase/libsql">turso/libsql</a> — i built their json binary protocol and optimized query planning. they even <a href="https://turso.tech/blog/faces-of-turso-ihor">featured me</a> in their community spotlight.</p>
+    <p>when i'm not at work, i contribute to <a href="https://github.com/tursodatabase/turso">turso</a> — i built their json binary protocol and optimized query planning. they even <a href="https://turso.tech/blog/faces-of-turso-ihor">featured me</a> in their community spotlight.</p>
     <p class="status">&gt; currently: open to interesting projects</p>
   </div>
 
@@ -37,12 +40,40 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </ul>
   </div>
 
-  <footer class="footer">
-    <p>odesa, ukraine</p>
-  </footer>
+      <footer class="footer">
+        <p>odesa, ukraine</p>
+      </footer>
+    </div>
+
+    <div class="side-scene">
+      <Scene3DLazy client:only="react" />
+    </div>
+  </div>
 </BaseLayout>
 
 <style>
+  .page-layout {
+    position: relative;
+  }
+
+  .main-content {
+    width: 100%;
+  }
+
+  .side-scene {
+    width: 200px;
+    height: 400px;
+    position: absolute;
+    right: -150px;
+    top: 130px;
+  }
+
+  @media (max-width: 800px) {
+    .side-scene {
+      display: none;
+    }
+  }
+
   .header {
     margin-bottom: 2.5rem;
     border-bottom: 1px solid var(--text-secondary);

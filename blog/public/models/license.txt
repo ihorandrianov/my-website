@@ -1,0 +1,11 @@
+Model Information:
+* title:	Neon Ramen Soup Sign
+* source:	https://sketchfab.com/3d-models/neon-ramen-soup-sign-db7b6dab6fae4fc3a6894e5326609ab9
+* author:	@blue.blender.print (https://sketchfab.com/arobaco)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Neon Ramen Soup Sign" (https://sketchfab.com/3d-models/neon-ramen-soup-sign-db7b6dab6fae4fc3a6894e5326609ab9) by @blue.blender.print (https://sketchfab.com/arobaco) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
