@@ -1,0 +1,62 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<BaseLayout title={`${post.data.title} - Blog`} description={post.data.description}>
+  <header class="header">
+    <p class="back-link"><a href={import.meta.env.BASE_URL}>← back to posts</a></p>
+    <h1>{post.data.title}</h1>
+    <p class="meta">
+      <time datetime={post.data.date.toISOString()}>
+        {post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+      </time>
+    </p>
+  </header>
+
+  <article class="content">
+    <Content />
+  </article>
+
+  <footer class="footer">
+    <a href={import.meta.env.BASE_URL}>← back to all posts</a>
+  </footer>
+</BaseLayout>
+
+<style>
+  .header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--text-secondary);
+    padding-bottom: 1rem;
+  }
+
+  .back-link {
+    margin-bottom: 1rem;
+  }
+
+  .meta {
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+  }
+
+  .content {
+    margin: 2rem 0;
+  }
+
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--text-secondary);
+  }
+</style>
