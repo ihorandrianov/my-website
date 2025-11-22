@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ihor Andrianov - Software Engineer</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Backend engineer specializing in Rust, distributed systems, CQRS/Event Sourcing, and high-performance async processing. Open source contributor to Turso database.">
+    <meta name="keywords" content="Ihor Andrianov, Software Engineer, Rust, Backend Developer, Distributed Systems, CQRS, Event Sourcing, PostgreSQL, Node.js, Axum, Tokio">
+    <meta name="author" content="Ihor Andrianov">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://andrianov.dev">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://andrianov.dev">
+    <meta property="og:title" content="Ihor Andrianov - Software Engineer">
+    <meta property="og:description" content="Backend engineer specializing in Rust, distributed systems, CQRS/Event Sourcing, and high-performance async processing. Open source contributor to Turso database.">
+    <meta property="og:image" content="https://andrianov.dev/og-image.jpg">
+    <meta property="og:site_name" content="Ihor Andrianov">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://andrianov.dev">
+    <meta name="twitter:title" content="Ihor Andrianov - Software Engineer">
+    <meta name="twitter:description" content="Backend engineer specializing in Rust, distributed systems, CQRS/Event Sourcing, and high-performance async processing.">
+    <meta name="twitter:image" content="https://andrianov.dev/og-image.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#1a1d3a">
+    
+    <!-- Additional SEO -->
+    <meta name="geo.region" content="UA-51">
+    <meta name="geo.placename" content="Odesa">
+    <meta name="geo.position" content="46.482526;30.712481">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* LCH color variables - technical, darker palette */
+            --neon-blue: lch(70% 85 240);
+            --neon-cyan: lch(75% 70 195);
+            --neon-green: lch(80% 90 140);
+            --text-primary: lch(90% 5 0);
+            --text-secondary: lch(65% 20 240);
+            --bg-dark: lch(12% 8 260);
+            --accent: lch(85% 95 140);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 750px;
+            width: 100%;
+        }
+
+        .header {
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--text-secondary);
+            padding-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--neon-blue);
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .bio {
+            margin: 2rem 0;
+        }
+
+        .bio p {
+            margin-bottom: 0.6rem;
+            color: var(--text-primary);
+        }
+
+        .status {
+            color: var(--accent);
+            margin-top: 1.5rem;
+            font-weight: bold;
+        }
+
+        .section {
+            margin: 2.5rem 0;
+        }
+
+        .section-title {
+            color: var(--neon-cyan);
+            margin-bottom: 0.8rem;
+            font-weight: bold;
+        }
+
+        .section p {
+            color: var(--text-primary);
+            margin-bottom: 0.4rem;
+        }
+
+        .link {
+            color: var(--neon-cyan);
+            text-decoration: none;
+            border-bottom: 1px solid var(--neon-cyan);
+            transition: all 0.3s ease;
+        }
+
+        .link:hover {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .links {
+            margin-top: 3rem;
+        }
+
+        ul {
+            list-style: none;
+            margin-left: 0;
+            margin-top: 1rem;
+        }
+
+        ul li {
+            margin: 0.5rem 0;
+        }
+
+        ul li::before {
+            content: "» ";
+            color: var(--text-secondary);
+            font-weight: bold;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--text-secondary);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            body {
+                padding: 1rem;
+            }
+
+            .section {
+                margin: 2rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ihor andrianov</h1>
+            <p class="subtitle">software engineer</p>
+        </div>
+
+        <div class="bio">
+            <p>backend engineer building distributed systems in rust and node.js</p>
+            <p>specialized in CQRS/event sourcing, high-performance async processing, database optimization</p>
+            <p class="status">> currently: open to interesting projects</p>
+        </div>
+
+        <div class="section">
+            <p class="section-title">currently working on:</p>
+            <p>• document signing platform (CQRS/ES, Ukrainian PKI crypto, FFI bindings)</p>
+            <p>• video processing infrastructure (AWS S3, FFmpeg, ML model integration)</p>
+            <p>• open source: contributing to Turso database (SQLite, CDC, query optimization)</p>
+        </div>
+
+        <div class="section">
+            <p class="section-title">tech i work with:</p>
+            <p>rust • axum • tokio • postgresql • redis • docker • aws • typescript • node.js</p>
+        </div>
+
+        <div class="section">
+            <p class="section-title">highlights:</p>
+            <p>• built parking aggregator backend handling 5k+ locations, reduced search latency by 60%</p>
+            <p>• optimized SQLite query planning achieving 50% perf improvement</p>
+            <p>• featured in <a href="#" class="link">turso community spotlight</a> for open source contributions</p>
+        </div>
+
+        <div>
+                <p>
+                    check out my <a href="https://andrianov.dev/blog" class="link">blog</a>
+                </p>
+                <p>
+                    read my <a href="https://andrianov.dev/resume" class="link">resume</a>
+                </p>
+        </div>
+
+        <div class="links">
+            <p class="section-title">links:</p>
+            <ul>
+                <li><a href="https://github.com/ihorandrianov" class="link">github</a></li>
+                <li><a href="https://www.linkedin.com/in/ihor-andrianov-173b55252/" class="link">linkedin</a></li>
+                <li><a href="https://t.me/andrianoia" class="link">telegram</a></li>
+                <li><a href="mailto:andrianoia@gmail.com" class="link">email</a></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>odesa, ukraine</p>
+        </div>
+    </div>
+</body>
+</html>
