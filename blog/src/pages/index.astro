@@ -1,35 +1,45 @@
 ---
-import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-const posts = await getCollection('posts');
-const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 ---
 
-<BaseLayout title="Blog - Ihor Andrianov" description="Technical blog about Rust, distributed systems, and backend development">
+<BaseLayout title="Ihor Andrianov - Software Engineer" description="Backend engineer specializing in Rust, distributed systems, CQRS/Event Sourcing, and high-performance async processing. Open source contributor to Turso database.">
   <header class="header">
-    <h1>blog</h1>
-    <p class="subtitle">thoughts on rust, systems, and code</p>
-    <p class="back-link"><a href="https://andrianov.dev">← back to main</a></p>
+    <h1>ihor andrianov</h1>
+    <p class="subtitle">software engineer</p>
   </header>
 
-  <main>
-    {sortedPosts.length === 0 ? (
-      <p class="no-posts">No posts yet. Check back soon!</p>
-    ) : (
-      <ul class="post-list">
-        {sortedPosts.map((post) => (
-          <li class="post-item">
-            <a href={`${import.meta.env.BASE_URL}${post.id}/`} class="post-link">
-              <span class="post-title">{post.data.title}</span>
-              <span class="post-date">{post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
-            </a>
-            <p class="post-description">{post.data.description}</p>
-          </li>
-        ))}
-      </ul>
-    )}
-  </main>
+  <div class="bio">
+    <p>i'm a backend engineer who loves building things that need to be fast and reliable — distributed systems, async processing pipelines, databases that don't fall over under load.</p>
+    <p>most of my work is in rust and node.js. i get excited about event sourcing, query optimization, and making systems handle millions of operations without breaking a sweat.</p>
+    <p>when i'm not at work, i contribute to <a href="https://github.com/tursodatabase/libsql">turso/libsql</a> — i built their json binary protocol and optimized query planning. they even <a href="https://turso.tech/blog/faces-of-turso-ihor">featured me</a> in their community spotlight.</p>
+    <p class="status">&gt; currently: open to interesting projects</p>
+  </div>
+
+  <div class="section">
+    <p class="section-title">what i've been building:</p>
+    <p>• document signing platform processing 1000+ signatures/day with ukrainian pki crypto</p>
+    <p>• video processing infrastructure handling large-scale uploads with ai/ml analysis</p>
+    <p>• parking aggregator backend for 5k+ uk locations (cut search latency by 60%)</p>
+  </div>
+
+  <div class="nav-links">
+    <p>check out my <a href="/blog/">blog</a></p>
+    <p>read my <a href="/cv/">cv</a></p>
+  </div>
+
+  <div class="links">
+    <p class="section-title">links:</p>
+    <ul>
+      <li><a href="https://github.com/ihorandrianov">github</a></li>
+      <li><a href="https://www.linkedin.com/in/ihor-andrianov-173b55252/">linkedin</a></li>
+      <li><a href="https://t.me/andrianoia">telegram</a></li>
+      <li><a href="mailto:work@andrianov.dev">email</a></li>
+    </ul>
+  </div>
+
+  <footer class="footer">
+    <p>odesa, ukraine</p>
+  </footer>
 </BaseLayout>
 
 <style>
@@ -44,61 +54,69 @@ const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.val
     font-size: 1rem;
     letter-spacing: 2px;
     text-transform: uppercase;
+  }
+
+  .bio {
+    margin: 2rem 0;
+  }
+
+  .bio p {
+    margin-bottom: 0.6rem;
+  }
+
+  .status {
+    color: var(--accent);
+    margin-top: 1.5rem;
+    font-weight: bold;
+  }
+
+  .section {
+    margin: 2.5rem 0;
+  }
+
+  .section-title {
+    color: var(--neon-lime);
+    margin-bottom: 0.8rem;
+    font-weight: bold;
+  }
+
+  .section p {
+    margin-bottom: 0.4rem;
+  }
+
+  .nav-links {
+    margin: 2rem 0;
+  }
+
+  .nav-links p {
     margin-bottom: 0.5rem;
   }
 
-  .back-link {
+  .links {
+    margin-top: 3rem;
+  }
+
+  .links ul {
+    list-style: none;
+    margin-left: 0;
     margin-top: 1rem;
   }
 
-  .no-posts {
+  .links ul li {
+    margin: 0.5rem 0;
+  }
+
+  .links ul li::before {
+    content: "» ";
     color: var(--text-secondary);
-  }
-
-  .post-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .post-item {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .post-item:last-child {
-    border-bottom: none;
-  }
-
-  .post-link {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-    border-bottom: none;
-    margin-bottom: 0.5rem;
-  }
-
-  .post-link:hover .post-title {
-    color: var(--accent);
-  }
-
-  .post-title {
-    color: var(--neon-lime);
     font-weight: bold;
-    transition: color 0.3s ease;
   }
 
-  .post-date {
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--text-secondary);
     color: var(--text-secondary);
-    font-size: 0.85rem;
-    white-space: nowrap;
-  }
-
-  .post-description {
-    color: var(--text-primary);
-    margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
 </style>

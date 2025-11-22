@@ -1,0 +1,104 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const posts = await getCollection('posts');
+const sortedPosts = posts.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<BaseLayout title="Blog - Ihor Andrianov" description="Technical blog about Rust, distributed systems, and backend development">
+  <header class="header">
+    <h1>blog</h1>
+    <p class="subtitle">thoughts on rust, systems, and code</p>
+    <p class="back-link"><a href="/">← back to main</a></p>
+  </header>
+
+  <main>
+    {sortedPosts.length === 0 ? (
+      <p class="no-posts">No posts yet. Check back soon!</p>
+    ) : (
+      <ul class="post-list">
+        {sortedPosts.map((post) => (
+          <li class="post-item">
+            <a href={`/blog/${post.id}/`} class="post-link">
+              <span class="post-title">{post.data.title}</span>
+              <span class="post-date">{post.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+            </a>
+            <p class="post-description">{post.data.description}</p>
+          </li>
+        ))}
+      </ul>
+    )}
+  </main>
+</BaseLayout>
+
+<style>
+  .header {
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--text-secondary);
+    padding-bottom: 1rem;
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .back-link {
+    margin-top: 1rem;
+  }
+
+  .no-posts {
+    color: var(--text-secondary);
+  }
+
+  .post-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .post-item {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .post-item:last-child {
+    border-bottom: none;
+  }
+
+  .post-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    border-bottom: none;
+    margin-bottom: 0.5rem;
+  }
+
+  .post-link:hover .post-title {
+    color: var(--accent);
+  }
+
+  .post-title {
+    color: var(--neon-lime);
+    font-weight: bold;
+    transition: color 0.3s ease;
+  }
+
+  .post-date {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .post-description {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 0.95rem;
+  }
+</style>
