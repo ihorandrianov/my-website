@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT telegram_user_id FROM authorized_users",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "telegram_user_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "23acd4ce0719284da75824a834bab27fdc3918ce5169f278f99ed7318f0950dc"
+}

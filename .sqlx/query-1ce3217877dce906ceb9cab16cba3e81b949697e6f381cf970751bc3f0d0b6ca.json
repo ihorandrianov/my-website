@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE notification_settings\n            SET temperature_alerts = NOT temperature_alerts\n            WHERE telegram_user_id = $1\n            RETURNING temperature_alerts\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "temperature_alerts",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "1ce3217877dce906ceb9cab16cba3e81b949697e6f381cf970751bc3f0d0b6ca"
+}

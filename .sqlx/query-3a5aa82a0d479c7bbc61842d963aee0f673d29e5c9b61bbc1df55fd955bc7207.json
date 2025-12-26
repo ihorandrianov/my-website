@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT temperature as \"temperature: f32\",\n                   humidity as \"humidity: f32\",\n                   pressure as \"pressure: f32\",\n                   soil_moisture as \"soil_moisture: f32\",\n                   water_level as \"water_level: f32\"\n            FROM sensor_data WHERE id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "temperature: f32",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 1,
+        "name": "humidity: f32",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 2,
+        "name": "pressure: f32",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 3,
+        "name": "soil_moisture: f32",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "water_level: f32",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "3a5aa82a0d479c7bbc61842d963aee0f673d29e5c9b61bbc1df55fd955bc7207"
+}

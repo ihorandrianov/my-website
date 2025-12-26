@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO power_outages (started_at) VALUES (NOW())",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "1debd9e449ac91f60c67697e37eaa87039d9b74594d4130b95acdd0ebcc6c43a"
+}

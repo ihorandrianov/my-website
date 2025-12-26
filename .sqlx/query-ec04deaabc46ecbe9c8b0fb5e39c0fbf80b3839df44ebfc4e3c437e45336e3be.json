@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE notification_settings\n            SET quiet_hours_enabled = NOT quiet_hours_enabled\n            WHERE telegram_user_id = $1\n            RETURNING quiet_hours_enabled\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "quiet_hours_enabled",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "ec04deaabc46ecbe9c8b0fb5e39c0fbf80b3839df44ebfc4e3c437e45336e3be"
+}

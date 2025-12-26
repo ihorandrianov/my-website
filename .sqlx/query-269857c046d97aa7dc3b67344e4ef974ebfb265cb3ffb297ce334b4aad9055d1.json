@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE notification_settings\n            SET soil_moisture_alerts = NOT soil_moisture_alerts\n            WHERE telegram_user_id = $1\n            RETURNING soil_moisture_alerts\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "soil_moisture_alerts",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "269857c046d97aa7dc3b67344e4ef974ebfb265cb3ffb297ce334b4aad9055d1"
+}

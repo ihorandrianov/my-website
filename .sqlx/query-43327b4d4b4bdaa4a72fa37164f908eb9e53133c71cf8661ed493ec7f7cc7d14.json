@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT telegram_user_id, soil_moisture_alerts, temperature_alerts,\n                   power_alerts, quiet_hours_enabled, quiet_hours_start, quiet_hours_end\n            FROM notification_settings\n            WHERE telegram_user_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "telegram_user_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "soil_moisture_alerts",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 2,
+        "name": "temperature_alerts",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 3,
+        "name": "power_alerts",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 4,
+        "name": "quiet_hours_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 5,
+        "name": "quiet_hours_start",
+        "type_info": "Int2"
+      },
+      {
+        "ordinal": 6,
+        "name": "quiet_hours_end",
+        "type_info": "Int2"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "43327b4d4b4bdaa4a72fa37164f908eb9e53133c71cf8661ed493ec7f7cc7d14"
+}

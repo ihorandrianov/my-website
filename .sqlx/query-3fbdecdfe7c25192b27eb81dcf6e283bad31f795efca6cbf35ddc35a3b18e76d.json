@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE notification_settings\n            SET power_alerts = NOT power_alerts\n            WHERE telegram_user_id = $1\n            RETURNING power_alerts\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "power_alerts",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "3fbdecdfe7c25192b27eb81dcf6e283bad31f795efca6cbf35ddc35a3b18e76d"
+}

@@ -1,0 +1,44 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                MIN(temperature)::real as \"min_temp!: f32\",\n                MAX(temperature)::real as \"max_temp!: f32\",\n                AVG(temperature)::real as \"avg_temp!: f32\",\n                MIN(humidity)::real as \"min_humidity!: f32\",\n                MAX(humidity)::real as \"max_humidity!: f32\"\n            FROM sensor_data\n            WHERE created_at >= CURRENT_DATE\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "min_temp!: f32",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 1,
+        "name": "max_temp!: f32",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 2,
+        "name": "avg_temp!: f32",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 3,
+        "name": "min_humidity!: f32",
+        "type_info": "Float4"
+      },
+      {
+        "ordinal": 4,
+        "name": "max_humidity!: f32",
+        "type_info": "Float4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "a6289f1e8ba60a84d884b944fff6b59bfc7c972f9a596eb5a40294f1be2ed124"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                INSERT INTO alert_states (alert_kind, active, last_sent_at)\n                VALUES ($1, $2, NOW())\n                ON CONFLICT (alert_kind) DO UPDATE SET active = $2, last_sent_at = NOW()\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Bool"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "0029f5ac66b7911d19f8102f0fd84a8dbd6382914d5de4c26f05c371a84e1134"
+}

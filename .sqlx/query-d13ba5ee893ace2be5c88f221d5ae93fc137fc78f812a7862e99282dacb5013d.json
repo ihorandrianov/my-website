@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT au.telegram_user_id\n            FROM authorized_users au\n            LEFT JOIN notification_settings ns ON au.telegram_user_id = ns.telegram_user_id\n            WHERE COALESCE(ns.power_alerts, true) = true\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "telegram_user_id",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "d13ba5ee893ace2be5c88f221d5ae93fc137fc78f812a7862e99282dacb5013d"
+}

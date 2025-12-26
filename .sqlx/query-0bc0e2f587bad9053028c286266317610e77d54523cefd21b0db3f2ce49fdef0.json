@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE power_outages\n            SET ended_at = NOW(),\n                duration_minutes = EXTRACT(EPOCH FROM (NOW() - started_at))::integer / 60\n            WHERE ended_at IS NULL\n            RETURNING duration_minutes\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "duration_minutes",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "0bc0e2f587bad9053028c286266317610e77d54523cefd21b0db3f2ce49fdef0"
+}

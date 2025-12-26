@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use axum::{
     extract::State,
     http::{HeaderMap, StatusCode},
@@ -6,12 +8,19 @@ use axum::{
 };
 use serde::Serialize;
 use sqlx::postgres::PgPoolOptions;
+use teloxide::Bot;
 use tokio::net::TcpListener;
 use tower_http::services::{ServeDir, ServeFile};
 
-use crate::db::{Db, SensorData};
-
+mod alerter;
+mod bot;
+mod config;
 mod db;
+mod listener;
+mod power_monitor;
+mod services;
+
+use db::{Db, SensorData};
 
 #[derive(Clone)]
 struct AppState {
@@ -25,6 +34,8 @@ async fn main() {
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let api_key = std::env::var("API_KEY").expect("API_KEY must be set");
+    let webhook_secret = std::env::var("WEBHOOK_SECRET").expect("WEBHOOK_SECRET must be set");
+    let bot_secret = std::env::var("BOT_SECRET").expect("BOT_SECRET must be set");
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
@@ -37,13 +48,31 @@ async fn main() {
         .await
         .expect("Failed to run migrations");
 
-    let state = AppState {
-        db: Db::new(pool.clone()),
-        api_key,
+    let db = Db::new(pool.clone());
+    let bot = Arc::new(Bot::from_env());
+
+    let bot_state = bot::BotState {
+        db: db.clone(),
+        bot_secret,
     };
 
+    let bot_router = bot::init_bot(bot.clone(), webhook_secret, bot_state)
+        .await
+        .expect("Failed to init bot");
+
+    let alerter = alerter::Alerter::new(bot, db.clone());
+
+    listener::spawn_sensor_listener(pool, alerter.clone())
+        .await
+        .expect("Failed to spawn sensor listener");
+
+    power_monitor::spawn_power_monitor(db.clone(), alerter);
+
+    let state = AppState { db, api_key };
+
     let app = Router::new()
-        .nest("/api", iot_api(state.clone()))
+        .merge(bot_router)
+        .nest("/api", api_routes(state))
         .route_service("/cv", get_service(ServeFile::new("static/cv/cv.pdf")))
         .route_service("/cv/", get_service(ServeFile::new("static/cv/cv.pdf")))
         .fallback_service(get_service(ServeDir::new("static")))
@@ -54,7 +83,7 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-fn iot_api(state: AppState) -> Router {
+fn api_routes(state: AppState) -> Router {
     Router::new()
         .route("/tasks", get(get_tasks))
         .route("/sensor", post(post_sensor))
@@ -69,7 +98,6 @@ fn check_api_key(headers: &HeaderMap, expected: &str) -> bool {
         .unwrap_or(false)
 }
 
-// POST /api/sensor - receive sensor data from device
 async fn post_sensor(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -115,7 +143,5 @@ async fn get_tasks(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    // TODO: Fetch pending tasks from database idk
-    // For now, return empty task list
     Ok(Json(TasksResponse { tasks: vec![] }))
 }
