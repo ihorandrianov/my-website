@@ -1,6 +1,6 @@
 use teloxide::{dispatching::dialogue::InMemStorage, prelude::*, utils::command::BotCommands};
 
-use super::keyboard::{main_keyboard, settings_keyboard};
+use super::keyboard::{main_keyboard, settings_keyboard, water_duration_keyboard};
 use super::responses;
 use crate::db::Db;
 
@@ -133,6 +133,12 @@ pub async fn handle_message(bot: Bot, msg: Message, state: BotState) -> Response
                 .await?;
             return Ok(());
         }
+        "💧 Water" => {
+            bot.send_message(msg.chat.id, "💧 Select watering duration:")
+                .reply_markup(water_duration_keyboard())
+                .await?;
+            return Ok(());
+        }
         _ => {
             bot.send_message(msg.chat.id, "Use the menu below:")
                 .reply_markup(main_keyboard())
@@ -164,6 +170,27 @@ pub async fn handle_callback(bot: Bot, q: CallbackQuery, state: BotState) -> Res
 
     if data.starts_with("toggle_") {
         handle_toggle(&bot, &q, &state, user_id, data, msg).await?;
+        return Ok(());
+    }
+
+    if data.starts_with("water_") {
+        if let Some(duration_str) = data.strip_prefix("water_") {
+            if let Ok(duration) = duration_str.parse::<i32>() {
+                match state.db.add_pump_command(duration).await {
+                    Ok(_) => {
+                        bot.answer_callback_query(q.id.clone())
+                            .text(format!("💧 Watering for {} seconds queued!", duration))
+                            .await?;
+                        bot.delete_message(msg.chat().id, msg.id()).await?;
+                    }
+                    Err(_) => {
+                        bot.answer_callback_query(q.id.clone())
+                            .text("Failed to queue command")
+                            .await?;
+                    }
+                }
+            }
+        }
         return Ok(());
     }
 

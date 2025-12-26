@@ -16,11 +16,27 @@ pub fn main_keyboard() -> KeyboardMarkup {
         ],
         vec![
             KeyboardButton::new("⚡ Power"),
-            KeyboardButton::new("⚙️ Settings"),
+            KeyboardButton::new("💧 Water"),
         ],
+        vec![KeyboardButton::new("⚙️ Settings")],
     ])
     .resize_keyboard()
     .persistent()
+}
+
+pub fn water_duration_keyboard() -> InlineKeyboardMarkup {
+    InlineKeyboardMarkup::new(vec![
+        vec![
+            InlineKeyboardButton::callback("5 sec", "water_5"),
+            InlineKeyboardButton::callback("10 sec", "water_10"),
+            InlineKeyboardButton::callback("15 sec", "water_15"),
+        ],
+        vec![
+            InlineKeyboardButton::callback("20 sec", "water_20"),
+            InlineKeyboardButton::callback("30 sec", "water_30"),
+        ],
+        vec![InlineKeyboardButton::callback("« Cancel", "back")],
+    ])
 }
 
 pub fn settings_keyboard(settings: &NotificationSettings) -> InlineKeyboardMarkup {

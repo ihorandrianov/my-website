@@ -368,4 +368,40 @@ impl Db {
         .await?;
         Ok(rows.into_iter().flatten().collect())
     }
+
+    pub async fn add_pump_command(&self, duration_secs: i32) -> sqlx::Result<()> {
+        sqlx::query!(
+            r#"
+            INSERT INTO device_commands (command_type, payload)
+            VALUES ('pump', jsonb_build_object('duration_secs', $1::integer))
+            "#,
+            duration_secs
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn get_pending_pump_command(&self) -> sqlx::Result<Option<i32>> {
+        let row = sqlx::query!(
+            r#"
+            SELECT id, (payload->>'duration_secs')::integer as "duration_secs!"
+            FROM device_commands
+            WHERE command_type = 'pump'
+            ORDER BY created_at ASC
+            LIMIT 1
+            "#
+        )
+        .fetch_optional(&self.pool)
+        .await?;
+
+        if let Some(r) = row {
+            sqlx::query!("DELETE FROM device_commands WHERE id = $1", r.id)
+                .execute(&self.pool)
+                .await?;
+            Ok(Some(r.duration_secs))
+        } else {
+            Ok(None)
+        }
+    }
 }

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO device_commands (command_type, payload)\n            VALUES ('pump', jsonb_build_object('duration_secs', $1::integer))\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7aec6aabdb78345f50ce41cd325eb61a8fd7a2fbf8ebe374ba2dc844263b163c"
+}

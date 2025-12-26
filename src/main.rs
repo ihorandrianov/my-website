@@ -123,16 +123,7 @@ async fn post_sensor(
 
 #[derive(Serialize)]
 struct TasksResponse {
-    tasks: Vec<Task>,
-}
-
-#[allow(dead_code)]
-#[derive(Serialize)]
-#[serde(tag = "type")]
-enum Task {
-    PumpOn { duration_secs: u32 },
-    PumpOff,
-    ReadNow,
+    pump_duration: u16,
 }
 
 async fn get_tasks(
@@ -143,5 +134,13 @@ async fn get_tasks(
         return Err(StatusCode::UNAUTHORIZED);
     }
 
-    Ok(Json(TasksResponse { tasks: vec![] }))
+    let pump_duration = state
+        .db
+        .get_pending_pump_command()
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0) as u16;
+
+    Ok(Json(TasksResponse { pump_duration }))
 }
