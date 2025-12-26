@@ -1,22 +1,26 @@
-use teloxide::types::{InlineKeyboardButton, InlineKeyboardMarkup};
+use teloxide::types::{
+    InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, KeyboardMarkup,
+};
 
 use crate::db::NotificationSettings;
 
-pub fn main_keyboard() -> InlineKeyboardMarkup {
-    InlineKeyboardMarkup::new(vec![
+pub fn main_keyboard() -> KeyboardMarkup {
+    KeyboardMarkup::new(vec![
         vec![
-            InlineKeyboardButton::callback("📊 Status", "status"),
-            InlineKeyboardButton::callback("🌤 Weather", "weather"),
+            KeyboardButton::new("📊 Status"),
+            KeyboardButton::new("🌤 Weather"),
         ],
         vec![
-            InlineKeyboardButton::callback("🌱 Garden", "garden"),
-            InlineKeyboardButton::callback("📈 Daily Stats", "stats"),
+            KeyboardButton::new("🌱 Garden"),
+            KeyboardButton::new("📈 Stats"),
         ],
         vec![
-            InlineKeyboardButton::callback("⚡ Power", "power"),
-            InlineKeyboardButton::callback("⚙️ Settings", "settings"),
+            KeyboardButton::new("⚡ Power"),
+            KeyboardButton::new("⚙️ Settings"),
         ],
     ])
+    .resize_keyboard()
+    .persistent()
 }
 
 pub fn settings_keyboard(settings: &NotificationSettings) -> InlineKeyboardMarkup {

@@ -27,11 +27,11 @@ impl Db {
         sqlx::query_as!(
             SensorData,
             r#"
-            SELECT temperature as "temperature: f32",
-                   humidity as "humidity: f32",
-                   pressure as "pressure: f32",
-                   soil_moisture as "soil_moisture: f32",
-                   water_level as "water_level: f32"
+            SELECT temperature::real as "temperature!: f32",
+                   humidity::real as "humidity!: f32",
+                   pressure::real as "pressure!: f32",
+                   soil_moisture::real as "soil_moisture!: f32",
+                   water_level::real as "water_level!: f32"
             FROM sensor_data WHERE id = $1
             "#,
             id
@@ -44,11 +44,11 @@ impl Db {
         sqlx::query_as!(
             SensorData,
             r#"
-            SELECT temperature as "temperature: f32",
-                   humidity as "humidity: f32",
-                   pressure as "pressure: f32",
-                   soil_moisture as "soil_moisture: f32",
-                   water_level as "water_level: f32"
+            SELECT temperature::real as "temperature!: f32",
+                   humidity::real as "humidity!: f32",
+                   pressure::real as "pressure!: f32",
+                   soil_moisture::real as "soil_moisture!: f32",
+                   water_level::real as "water_level!: f32"
             FROM sensor_data
             ORDER BY created_at DESC
             LIMIT 1
@@ -61,7 +61,7 @@ impl Db {
     pub async fn get_pressure_hours_ago(&self, hours: i32) -> sqlx::Result<Option<f32>> {
         sqlx::query_scalar!(
             r#"
-            SELECT pressure as "pressure: f32"
+            SELECT pressure::real as "pressure!: f32"
             FROM sensor_data
             WHERE created_at <= NOW() - make_interval(hours => $1)
             ORDER BY created_at DESC

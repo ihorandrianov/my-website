@@ -11,6 +11,8 @@ pub enum Command {
     Start,
     #[command(description = "Show this help message")]
     Help,
+    #[command(description = "Notification settings")]
+    Settings,
 }
 
 #[derive(Clone, Default)]
@@ -75,7 +77,12 @@ pub async fn handle_unauthorized(
     Ok(())
 }
 
-pub async fn handle_command(bot: Bot, msg: Message, cmd: Command) -> ResponseResult<()> {
+pub async fn handle_command(
+    bot: Bot,
+    msg: Message,
+    cmd: Command,
+    state: BotState,
+) -> ResponseResult<()> {
     match cmd {
         Command::Start => {
             bot.send_message(msg.chat.id, "Main menu:")
@@ -86,14 +93,55 @@ pub async fn handle_command(bot: Bot, msg: Message, cmd: Command) -> ResponseRes
             bot.send_message(msg.chat.id, Command::descriptions().to_string())
                 .await?;
         }
+        Command::Settings => {
+            let user_id = msg.from.as_ref().map(|u| u.id.0 as i64).unwrap_or(0);
+            let _ = state.db.ensure_notification_settings(user_id).await;
+            let settings = state
+                .db
+                .get_notification_settings(user_id)
+                .await
+                .unwrap_or_default();
+
+            bot.send_message(msg.chat.id, "⚙️ Notification Settings")
+                .reply_markup(settings_keyboard(&settings))
+                .await?;
+        }
     }
     Ok(())
 }
 
-pub async fn handle_message(bot: Bot, msg: Message) -> ResponseResult<()> {
-    bot.send_message(msg.chat.id, "Use the menu below:")
-        .reply_markup(main_keyboard())
-        .await?;
+pub async fn handle_message(bot: Bot, msg: Message, state: BotState) -> ResponseResult<()> {
+    let Some(text) = msg.text() else {
+        return Ok(());
+    };
+
+    let user_id = msg.from.as_ref().map(|u| u.id.0 as i64).unwrap_or(0);
+
+    let response = match text {
+        "📊 Status" => responses::build_status(&state.db).await,
+        "🌤 Weather" => responses::build_weather(&state.db).await,
+        "🌱 Garden" => responses::build_garden(&state.db).await,
+        "📈 Stats" => responses::build_stats(&state.db).await,
+        "⚡ Power" => responses::build_power_history(&state.db).await,
+        "⚙️ Settings" => {
+            let _ = state.db.ensure_notification_settings(user_id).await;
+            let settings = state.db.get_notification_settings(user_id).await.ok();
+            let settings = settings.unwrap_or_default();
+
+            bot.send_message(msg.chat.id, "⚙️ Notification Settings")
+                .reply_markup(settings_keyboard(&settings))
+                .await?;
+            return Ok(());
+        }
+        _ => {
+            bot.send_message(msg.chat.id, "Use the menu below:")
+                .reply_markup(main_keyboard())
+                .await?;
+            return Ok(());
+        }
+    };
+
+    bot.send_message(msg.chat.id, response).await?;
     Ok(())
 }
 
@@ -119,38 +167,9 @@ pub async fn handle_callback(bot: Bot, q: CallbackQuery, state: BotState) -> Res
         return Ok(());
     }
 
-    match data.as_str() {
-        "settings" => {
-            let _ = state.db.ensure_notification_settings(user_id).await;
-            let settings = state.db.get_notification_settings(user_id).await.ok();
-            let settings = settings.unwrap_or_default();
-
-            bot.answer_callback_query(q.id.clone()).await?;
-            bot.edit_message_text(msg.chat().id, msg.id(), "⚙️ Notification Settings")
-                .reply_markup(settings_keyboard(&settings))
-                .await?;
-        }
-        "back" => {
-            bot.answer_callback_query(q.id.clone()).await?;
-            bot.edit_message_text(msg.chat().id, msg.id(), "Main menu:")
-                .reply_markup(main_keyboard())
-                .await?;
-        }
-        _ => {
-            let response = match data.as_str() {
-                "status" => responses::build_status(&state.db).await,
-                "weather" => responses::build_weather(&state.db).await,
-                "garden" => responses::build_garden(&state.db).await,
-                "stats" => responses::build_stats(&state.db).await,
-                "power" => responses::build_power_history(&state.db).await,
-                _ => "Unknown command".to_string(),
-            };
-
-            bot.answer_callback_query(q.id.clone()).await?;
-            bot.edit_message_text(msg.chat().id, msg.id(), &response)
-                .reply_markup(main_keyboard())
-                .await?;
-        }
+    if data == "back" {
+        bot.answer_callback_query(q.id.clone()).await?;
+        bot.delete_message(msg.chat().id, msg.id()).await?;
     }
 
     Ok(())

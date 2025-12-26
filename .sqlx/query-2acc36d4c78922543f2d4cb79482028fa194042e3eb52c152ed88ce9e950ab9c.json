@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT pressure::real as \"pressure!: f32\"\n            FROM sensor_data\n            WHERE created_at <= NOW() - make_interval(hours => $1)\n            ORDER BY created_at DESC\n            LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "pressure!: f32",
+        "type_info": "Float4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "2acc36d4c78922543f2d4cb79482028fa194042e3eb52c152ed88ce9e950ab9c"
+}
