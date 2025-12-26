@@ -19,7 +19,7 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@79.76.100.73 << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.SERVER_IP }} << 'EOF'
             export FNM_DIR="$HOME/.local/share/fnm"
             eval "$(~/.local/share/fnm/fnm env)"
             ~/.local/share/fnm/fnm use 20
