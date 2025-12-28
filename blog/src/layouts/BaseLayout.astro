@@ -138,6 +138,13 @@ const { title, description = 'Blog by Ihor Andrianov' } = Astro.props;
     color: var(--text-secondary);
   }
 
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+  }
+
   @media (max-width: 768px) {
     h1 {
       font-size: 2rem;
