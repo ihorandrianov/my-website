@@ -1,0 +1,160 @@
+<!DOCTYPE html><html lang="en"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Full Stack Rust: From GPIO Pins to Telegram Bots - Blog</title><meta name="description" content="How I built an over-engineered plant watering system using Rust on both a Raspberry Pi Pico microcontroller and a backend server with PostgreSQL and Telegram integration."><meta name="author" content="Ihor Andrianov"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="theme-color" content="#1a1d3a"><style>*{margin:0;padding:0;box-sizing:border-box}:root{--neon-blue: #c9a87c;--neon-lime: #c9a87c;--neon-gold: #c9a87c;--text-primary: #d4d4d4;--text-secondary: #777777;--bg-dark: #0f0f0f;--accent: #c9a87c}html{overflow-x:hidden}body{font-family:Courier New,monospace;background:var(--bg-dark);color:var(--text-primary);min-height:100vh;padding:2rem;line-height:1.7;overflow-x:hidden;word-wrap:break-word;overflow-wrap:break-word;font-weight:500}.container{max-width:750px;width:100%;margin:0 auto}a{color:var(--neon-lime);text-decoration:none;border-bottom:1px solid var(--neon-lime);transition:all .3s ease}a:hover{color:var(--accent);border-bottom-color:var(--accent)}h1{font-size:2.5rem;color:var(--neon-blue);margin-bottom:.5rem;font-weight:700;letter-spacing:1px}h2{color:var(--neon-lime);margin:1.5rem 0 .8rem;font-weight:700;font-size:1.5rem}h3{color:var(--neon-lime);margin:1.2rem 0 .6rem;font-size:1.2rem}p{margin-bottom:1rem}ul,ol{margin-left:1.5rem;margin-bottom:1rem}li{margin:.3rem 0}code{background:#ffffff1a;padding:.2rem .4rem;border-radius:3px;font-size:.9em}pre{background:#0000004d;padding:1rem;border-radius:5px;overflow-x:auto;margin:1rem 0}pre code{background:none;padding:0}blockquote{border-left:3px solid var(--neon-lime);padding-left:1rem;margin:1rem 0;color:var(--text-secondary)}@media(max-width:768px){h1{font-size:2rem}body{padding:1rem}}
+.header[data-astro-cid-7jjqptxk]{margin-bottom:2rem;border-bottom:1px solid var(--text-secondary);padding-bottom:1rem}.back-link[data-astro-cid-7jjqptxk]{margin-bottom:1rem}.meta[data-astro-cid-7jjqptxk]{color:var(--text-secondary);margin-top:.5rem}.content[data-astro-cid-7jjqptxk]{margin:2rem 0}.footer[data-astro-cid-7jjqptxk]{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--text-secondary)}
+</style></head> <body> <div class="container">  <header class="header" data-astro-cid-7jjqptxk> <p class="back-link" data-astro-cid-7jjqptxk><a href="/blog/" data-astro-cid-7jjqptxk>← back to posts</a></p> <h1 data-astro-cid-7jjqptxk>Full Stack Rust: From GPIO Pins to Telegram Bots</h1> <p class="meta" data-astro-cid-7jjqptxk> <time datetime="2024-12-29T00:00:00.000Z" data-astro-cid-7jjqptxk> December 29, 2024 </time> </p> </header> <article class="content" data-astro-cid-7jjqptxk> <p><em>Or: How I spent way too much time automating something I could do in 30 seconds with a watering can</em></p>
+<hr/>
+<h2 id="what-even-is-this">What Even Is This</h2>
+<p>I built a plant watering system. Microcontroller reads soil moisture, sends data to my server, I get Telegram messages when my plants are dying. I can water them remotely with a button.</p>
+<p>The twist: Rust all the way down. Firmware on a $6 chip with no OS? Rust. Backend with PostgreSQL and Telegram bot? Also Rust.</p>
+<p>Spoiler: I shared almost zero code between them. That wasn’t the point.</p>
+<img src="/_astro/watering1.CMKN3xdb_Z1fHrKe.webp" alt="The watering system setup" loading="lazy" decoding="async" fetchpriority="auto" width="960" height="1280">
+<hr/>
+<h2 id="the-setup">The Setup</h2>
+<p><strong>Raspberry Pi Pico 2 W</strong> - 150MHz, 512KB RAM, no OS.</p>
+<p>Connected: BME280 (temp/humidity/pressure), soil moisture sensor, OLED display, water pump, and an ultrasonic sensor for water level that I never got working and probably never will.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="plaintext"><code><span class="line"><span>                        ┌───────────────────────────────────────┐</span></span>
+<span class="line"><span>                        │           Pico 2 W (Rust)             │</span></span>
+<span class="line"><span>                        │  BME280 + Soil Sensor + OLED + Pump   │</span></span>
+<span class="line"><span>                        └─────────────────┬─────────────────────┘</span></span>
+<span class="line"><span>                                          │</span></span>
+<span class="line"><span>                    POST /sensor          │           GET /tasks</span></span>
+<span class="line"><span>               (temp, humidity, soil)     │        (pump commands)</span></span>
+<span class="line"><span>                          │               │               ▲</span></span>
+<span class="line"><span>                          ▼               │               │</span></span>
+<span class="line"><span>                        ┌─────────────────▼───────────────┴─┐</span></span>
+<span class="line"><span>                        │           VPS (Rust)              │</span></span>
+<span class="line"><span>                        │  Axum → PostgreSQL → Teloxide     │</span></span>
+<span class="line"><span>                        └─────────────────┬─────────────────┘</span></span>
+<span class="line"><span>                                          │</span></span>
+<span class="line"><span>                          LISTEN/NOTIFY   │   Alerts + Controls</span></span>
+<span class="line"><span>                                          ▼</span></span>
+<span class="line"><span>                                    ┌───────────┐</span></span>
+<span class="line"><span>                                    │ Telegram  │</span></span>
+<span class="line"><span>                                    │   Bot     │</span></span>
+<span class="line"><span>                                    └───────────┘</span></span>
+<span class="line"><span>                                          │</span></span>
+<span class="line"><span>                                          ▼</span></span>
+<span class="line"><span>                                       My Phone</span></span>
+<span class="line"><span>                                   &quot;Water the plant&quot;</span></span></code></pre>
+<hr/>
+<h2 id="how-hard-can-it-be">”How Hard Can It Be?”</h2>
+<p>Famous last words.</p>
+<p>The Rust embedded ecosystem has <strong><a href="https://embassy.dev">Embassy</a></strong> - an async runtime for microcontrollers. Write async/await on bare metal, multiple concurrent tasks on a single-core chip. The pitch was too good.</p>
+<p>This thing is amazing. I’m always surprised how good the Rust community is at developer tools and libraries.</p>
+<img src="/_astro/watering2.IpObTmY2_Z2h7f6y.webp" alt="Hardware components" loading="lazy" decoding="async" fetchpriority="auto" width="960" height="1280">
+<p>The architecture is basically actors - independent tasks talking through channels:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="rust"><code><span class="line"><span style="color:#6A737D">// Capacity 1: only latest reading matters, old data gets dropped</span></span>
+<span class="line"><span style="color:#F97583">static</span><span style="color:#79B8FF"> SENSOR_CHANNEL</span><span style="color:#F97583">:</span><span style="color:#B392F0"> Channel</span><span style="color:#E1E4E8">&lt;</span><span style="color:#B392F0">CriticalSectionRawMutex</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">SensorData</span><span style="color:#E1E4E8">, 1&gt; </span><span style="color:#F97583">=</span><span style="color:#B392F0"> Channel</span><span style="color:#F97583">::</span><span style="color:#B392F0">new</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Capacity 4: buffer HTTP requests when network is slow</span></span>
+<span class="line"><span style="color:#F97583">static</span><span style="color:#79B8FF"> HTTP_CHANNEL</span><span style="color:#F97583">:</span><span style="color:#B392F0"> Channel</span><span style="color:#E1E4E8">&lt;</span><span style="color:#B392F0">CriticalSectionRawMutex</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">HttpRequest</span><span style="color:#E1E4E8">, 4&gt; </span><span style="color:#F97583">=</span><span style="color:#B392F0"> Channel</span><span style="color:#F97583">::</span><span style="color:#B392F0">new</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">// Capacity 1: only latest pump command matters</span></span>
+<span class="line"><span style="color:#F97583">static</span><span style="color:#79B8FF"> PUMP_CHANNEL</span><span style="color:#F97583">:</span><span style="color:#B392F0"> Channel</span><span style="color:#E1E4E8">&lt;</span><span style="color:#B392F0">CriticalSectionRawMutex</span><span style="color:#E1E4E8">, </span><span style="color:#B392F0">PumpCommand</span><span style="color:#E1E4E8">, 1&gt; </span><span style="color:#F97583">=</span><span style="color:#B392F0"> Channel</span><span style="color:#F97583">::</span><span style="color:#B392F0">new</span><span style="color:#E1E4E8">();</span></span></code></pre>
+<p>Each task does one thing:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="rust"><code><span class="line"><span style="color:#E1E4E8">#[embassy_executor</span><span style="color:#F97583">::</span><span style="color:#E1E4E8">task]</span></span>
+<span class="line"><span style="color:#F97583">async</span><span style="color:#F97583"> fn</span><span style="color:#B392F0"> sensor_task</span><span style="color:#E1E4E8">(i2c_bus</span><span style="color:#F97583">:</span><span style="color:#F97583"> &amp;</span><span style="color:#E1E4E8">&#39;</span><span style="color:#B392F0">static</span><span style="color:#B392F0"> I2cBus</span><span style="color:#E1E4E8">) {</span></span>
+<span class="line"><span style="color:#F97583">    loop</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#F97583">        let</span><span style="color:#E1E4E8"> data </span><span style="color:#F97583">=</span><span style="color:#B392F0"> read_sensors</span><span style="color:#E1E4E8">(i2c_bus)</span><span style="color:#F97583">.await</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#79B8FF">        SENSOR_CHANNEL</span><span style="color:#F97583">.</span><span style="color:#B392F0">send</span><span style="color:#E1E4E8">(data)</span><span style="color:#F97583">.await</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#B392F0">        Timer</span><span style="color:#F97583">::</span><span style="color:#B392F0">after_secs</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">60</span><span style="color:#E1E4E8">)</span><span style="color:#F97583">.await</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>Sensor task reads, display task renders, network task sends, pump task waters. They don’t know about each other - just channels. If you’ve done actor systems or used Tokio channels, this is familiar. That’s the point.</p>
+<p>First milestone: blink an LED. It worked.</p>
+<hr/>
+<h2 id="reality-check">Reality Check</h2>
+<p>Then I tried to initialize WiFi.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="rust"><code><span class="line"><span style="color:#F97583">let</span><span style="color:#E1E4E8"> (net_device, </span><span style="color:#F97583">mut</span><span style="color:#E1E4E8"> control, runner) </span><span style="color:#F97583">=</span><span style="color:#B392F0"> cyw43</span><span style="color:#F97583">::</span><span style="color:#B392F0">new</span><span style="color:#E1E4E8">(state, pwr, spi, fw)</span><span style="color:#F97583">.await</span><span style="color:#E1E4E8">;</span></span></code></pre>
+<p>The code compiled. The device did nothing. No LED, no logs. Just silence.</p>
+<h3 id="three-days-in-github-issues">Three Days in GitHub Issues</h3>
+<p>I tried everything. Different Embassy versions. Secure boot configs. Staring at the code hoping it would fix itself.</p>
+<p>Finally, buried in a <a href="https://github.com/embassy-rs/embassy/issues/3612">GitHub issue</a>: the RP2350 runs at 150MHz, not 133MHz like the RP2040. This breaks PIO timing for SPI communication.</p>
+<p>The fix was a magic number that took three days to find:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="rust"><code><span class="line"><span style="color:#6A737D">// This constant represents mass of time consumed debugging</span></span>
+<span class="line"><span style="color:#F97583">const</span><span style="color:#79B8FF"> PICO2W_CLOCK_DIVIDER</span><span style="color:#F97583">:</span><span style="color:#B392F0"> FixedU32</span><span style="color:#E1E4E8">&lt;</span><span style="color:#B392F0">U8</span><span style="color:#E1E4E8">&gt; </span><span style="color:#F97583">=</span><span style="color:#B392F0"> FixedU32</span><span style="color:#F97583">::</span><span style="color:#B392F0">from_bits</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">0x0300</span><span style="color:#E1E4E8">);</span></span></code></pre>
+<p>The other part was recently broken WiFi drivers, so I had to roll back and pin to working commits. It’s hard to be a pioneer. But I’m not really one - those who write these drivers are the ones who rock.</p>
+<h3 id="the-tls-situation">The TLS Situation</h3>
+<p>My server is behind Cloudflare. No HTTPS, no connection. I used <a href="https://github.com/drogue-iot/reqwless">reqwless</a> with <code>embedded-tls</code>.</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="rust"><code><span class="line"><span style="color:#F97583">let</span><span style="color:#F97583"> mut</span><span style="color:#E1E4E8"> tls_read_buffer </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> [</span><span style="color:#79B8FF">0</span><span style="color:#B392F0">u8</span><span style="color:#E1E4E8">; </span><span style="color:#79B8FF">16640</span><span style="color:#E1E4E8">];</span></span>
+<span class="line"><span style="color:#F97583">let</span><span style="color:#F97583"> mut</span><span style="color:#E1E4E8"> tls_write_buffer </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> [</span><span style="color:#79B8FF">0</span><span style="color:#B392F0">u8</span><span style="color:#E1E4E8">; </span><span style="color:#79B8FF">16640</span><span style="color:#E1E4E8">];</span></span></code></pre>
+<p>33KB just for TLS buffers. 6% of my total RAM for one HTTPS connection.</p>
+<p>It worked. Barely, but it worked.</p>
+<p>Yes, I know MQTT exists. Yes, I know a home server with a broker would skip TLS on microcontroller entirely. That’s the plan for version 2: add more infrastructure to water a plant. The solution to overengineering is always more engineering.</p>
+<img src="/_astro/watering3.C-HFeqiD_1QrQqX.webp" alt="System in action" loading="lazy" decoding="async" fetchpriority="auto" width="960" height="1280">
+<hr/>
+<h2 id="the-backend-the-easy-part">The Backend (The Easy Part)</h2>
+<p>After embedded suffering, Rust on a server felt like cheating. <a href="https://github.com/tokio-rs/axum">Axum</a>, <a href="https://github.com/launchbadge/sqlx">SQLx</a>, <a href="https://github.com/teloxide/teloxide">Teloxide</a> - the whole thing came together in a weekend.</p>
+<p>The interesting bits:</p>
+<p><strong>Real-time processing without polling</strong> - PostgreSQL LISTEN/NOTIFY wakes up my code only when new data arrives:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="rust"><code><span class="line"><span style="color:#F97583">let</span><span style="color:#F97583"> mut</span><span style="color:#E1E4E8"> listener </span><span style="color:#F97583">=</span><span style="color:#B392F0"> PgListener</span><span style="color:#F97583">::</span><span style="color:#B392F0">connect_with</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">&amp;</span><span style="color:#E1E4E8">pool)</span><span style="color:#F97583">.await?</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">listener</span><span style="color:#F97583">.</span><span style="color:#B392F0">listen</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&quot;sensor_data&quot;</span><span style="color:#E1E4E8">)</span><span style="color:#F97583">.await?</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">loop</span><span style="color:#E1E4E8"> {</span></span>
+<span class="line"><span style="color:#F97583">    let</span><span style="color:#E1E4E8"> notification </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> listener</span><span style="color:#F97583">.</span><span style="color:#B392F0">recv</span><span style="color:#E1E4E8">()</span><span style="color:#F97583">.await?</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#B392F0">    process_sensor_data</span><span style="color:#E1E4E8">(notification</span><span style="color:#F97583">.</span><span style="color:#B392F0">payload</span><span style="color:#E1E4E8">())</span><span style="color:#F97583">.await?</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p><strong>Power outage detection</strong> - sensor reports every 60 seconds, so silence means trouble. The Pico doesn’t send a “dying gasp” - it just stops. A background task on the backend checks <code>last_reading</code> every two minutes:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="rust"><code><span class="line"><span style="color:#F97583">let</span><span style="color:#E1E4E8"> elapsed </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (now </span><span style="color:#F97583">-</span><span style="color:#E1E4E8"> last_reading)</span><span style="color:#F97583">.</span><span style="color:#B392F0">whole_seconds</span><span style="color:#E1E4E8">();</span></span>
+<span class="line"><span style="color:#F97583">if</span><span style="color:#E1E4E8"> elapsed </span><span style="color:#F97583">&gt;</span><span style="color:#79B8FF"> 150</span><span style="color:#F97583"> &amp;&amp;</span><span style="color:#F97583"> !</span><span style="color:#E1E4E8">active_outage {</span></span>
+<span class="line"><span style="color:#E1E4E8">    db</span><span style="color:#F97583">.</span><span style="color:#B392F0">start_outage</span><span style="color:#E1E4E8">()</span><span style="color:#F97583">.await?</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    alerter</span><span style="color:#F97583">.</span><span style="color:#B392F0">broadcast</span><span style="color:#E1E4E8">(</span><span style="color:#9ECBFF">&quot;Power outage detected!&quot;</span><span style="color:#E1E4E8">)</span><span style="color:#F97583">.await?</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+<p><strong>Detecting <em>absence</em> is philosophically weird - you’re looking for something that isn’t there.</strong> The system knows power is off because it knows when it isn’t. <a href="https://www.youtube.com/watch?v=bZe5J8SVCYQ">The missile guidance approach to plant care.</a></p>
+<hr/>
+<h2 id="the-moment-it-all-connected">The Moment It All Connected</h2>
+<p>First time I saw this in my database:</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8;overflow-x:auto" tabindex="0" data-language="json"><code><span class="line"><span style="color:#E1E4E8">{</span><span style="color:#79B8FF">&quot;temperature&quot;</span><span style="color:#E1E4E8">: </span><span style="color:#79B8FF">23.5</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">&quot;humidity&quot;</span><span style="color:#E1E4E8">: </span><span style="color:#79B8FF">45.2</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">&quot;pressure&quot;</span><span style="color:#E1E4E8">: </span><span style="color:#79B8FF">1013.25</span><span style="color:#E1E4E8">, </span><span style="color:#79B8FF">&quot;soil_moisture&quot;</span><span style="color:#E1E4E8">: </span><span style="color:#79B8FF">67</span><span style="color:#E1E4E8">}</span></span></code></pre>
+<p>…sent from a chip the size of my thumb, through WiFi, through Cloudflare, into PostgreSQL - I screenshot everything. Sent it to friends who definitely didn’t care but pretended to.</p>
+<p>First Telegram notification while away from home:</p>
+<blockquote>
+<p>Soil moisture is low (28%). Consider watering.</p>
+</blockquote>
+<img src="/_astro/watering4.CnEwdPhG_Zzfv1t.webp" alt="Telegram bot interface" loading="lazy" decoding="async" fetchpriority="auto" width="960" height="1280">
+<hr/>
+<h2 id="what-full-stack-rust-actually-means">What “Full Stack Rust” Actually Means</h2>
+<p>I expected shared code between firmware and backend. Common types, validation logic.</p>
+<p>Reality: almost zero shared code.</p>
+<p>But Embassy and Tokio feel almost identical:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Embedded (Embassy)</th><th>Backend (Tokio)</th></tr></thead><tbody><tr><td><code>#[embassy_executor::task]</code></td><td><code>#[tokio::main]</code></td></tr><tr><td><code>Timer::after_secs(30).await</code></td><td><code>sleep(Duration::from_secs(30)).await</code></td></tr><tr><td><code>CHANNEL.send(data).await</code></td><td><code>tx.send(data).await</code></td></tr><tr><td><code>spawner.spawn(task())</code></td><td><code>tokio::spawn(task())</code></td></tr></tbody></table>
+<p>Same patterns. Same intuition. Different worlds. The cognitive load of switching is near zero. When I changed a struct on the backend and forgot the firmware, SQLx’s compile-time checks caught it.</p>
+<p>That’s what “full stack” actually gave me - not shared code, but <strong>shared mental model</strong>.</p>
+<hr/>
+<h2 id="hindsight">Hindsight</h2>
+<p><strong>What Rust gave me:</strong> Confidence. If it compiles, it probably works. Same tooling everywhere. Fearless concurrency on both ends.</p>
+<p><strong>What it cost:</strong> Compile times. Ecosystem churn (Embassy moves faster than its docs). The embedded learning curve is real - <code>no_std</code> is a different world. But Embassy is magic, giving a dumb web developer like me the ability to write bare metal code. One of the best feelings I’ve ever had.</p>
+<p><strong>What I’d do differently:</strong> Use MQTT. (No) Add OTA updates. (Maybe) Fix the ultrasonic sensor. (Or just admit I never will)</p>
+<hr/>
+<h2 id="was-it-worth-it">Was It Worth It?</h2>
+<p>My plants now have better monitoring than most production systems I’ve worked on. Real-time data in PostgreSQL, alerting with quiet hours, power outage detection, remote control via Telegram.</p>
+<p>Total cost: ~$20 in hardware, mass(time). The plants are alive. That’s more than I can say for my previous attempts at gardening.</p>
+<p>All because I wanted to water my plants from my phone without getting up.</p>
+<p>Is it overkill? Obviously.</p>
+<p>Would I do it again? Already planning version 2.</p>
+<p><em>(For future employers reading this: Am I prone to overengineering? Obviously not. This is a perfectly reasonable amount of infrastructure for watering a plant.)</em></p>
+<hr/>
+<p><em>The code is on GitHub if you want to steal ideas or judge my life choices: <a href="https://github.com/ihorandrianov/auto-watering">firmware</a> and <a href="https://github.com/ihorandrianov/my-website">backend</a>. Just don’t blame me if your plants die anyway - I’m a software developer, not a botanist.</em></p> </article> <footer class="footer" data-astro-cid-7jjqptxk> <a href="/blog/" data-astro-cid-7jjqptxk>← back to all posts</a> </footer>  </div> </body></html> 

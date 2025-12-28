@@ -1,0 +1,248 @@
+---
+title: "Full Stack Rust: From GPIO Pins to Telegram Bots"
+description: "How I built an over-engineered plant watering system using Rust on both a Raspberry Pi Pico microcontroller and a backend server with PostgreSQL and Telegram integration."
+date: 2024-12-29
+tags: ["rust", "embedded", "embassy", "raspberry-pi", "iot", "telegram"]
+---
+
+import { Image } from 'astro:assets';
+import watering1 from '/public/blogpost/watering1.jpg';
+import watering2 from '/public/blogpost/watering2.jpg';
+import watering3 from '/public/blogpost/watering3.jpg';
+import watering4 from '/public/blogpost/watering4.jpg';
+
+*Or: How I spent way too much time automating something I could do in 30 seconds with a watering can*
+
+---
+
+## What Even Is This
+
+I built a plant watering system. Microcontroller reads soil moisture, sends data to my server, I get Telegram messages when my plants are dying. I can water them remotely with a button.
+
+The twist: Rust all the way down. Firmware on a $6 chip with no OS? Rust. Backend with PostgreSQL and Telegram bot? Also Rust.
+
+Spoiler: I shared almost zero code between them. That wasn't the point.
+
+<Image src={watering1} alt="The watering system setup" />
+
+---
+
+## The Setup
+
+**Raspberry Pi Pico 2 W** - 150MHz, 512KB RAM, no OS.
+
+Connected: BME280 (temp/humidity/pressure), soil moisture sensor, OLED display, water pump, and an ultrasonic sensor for water level that I never got working and probably never will.
+
+```
+                        ┌───────────────────────────────────────┐
+                        │           Pico 2 W (Rust)             │
+                        │  BME280 + Soil Sensor + OLED + Pump   │
+                        └─────────────────┬─────────────────────┘
+                                          │
+                    POST /sensor          │           GET /tasks
+               (temp, humidity, soil)     │        (pump commands)
+                          │               │               ▲
+                          ▼               │               │
+                        ┌─────────────────▼───────────────┴─┐
+                        │           VPS (Rust)              │
+                        │  Axum → PostgreSQL → Teloxide     │
+                        └─────────────────┬─────────────────┘
+                                          │
+                          LISTEN/NOTIFY   │   Alerts + Controls
+                                          ▼
+                                    ┌───────────┐
+                                    │ Telegram  │
+                                    │   Bot     │
+                                    └───────────┘
+                                          │
+                                          ▼
+                                       My Phone
+                                   "Water the plant"
+```
+
+---
+
+## "How Hard Can It Be?"
+
+Famous last words.
+
+The Rust embedded ecosystem has **[Embassy](https://embassy.dev)** - an async runtime for microcontrollers. Write async/await on bare metal, multiple concurrent tasks on a single-core chip. The pitch was too good.
+
+This thing is amazing. I'm always surprised how good the Rust community is at developer tools and libraries.
+
+<Image src={watering2} alt="Hardware components" />
+
+The architecture is basically actors - independent tasks talking through channels:
+
+```rust
+// Capacity 1: only latest reading matters, old data gets dropped
+static SENSOR_CHANNEL: Channel<CriticalSectionRawMutex, SensorData, 1> = Channel::new();
+
+// Capacity 4: buffer HTTP requests when network is slow
+static HTTP_CHANNEL: Channel<CriticalSectionRawMutex, HttpRequest, 4> = Channel::new();
+
+// Capacity 1: only latest pump command matters
+static PUMP_CHANNEL: Channel<CriticalSectionRawMutex, PumpCommand, 1> = Channel::new();
+```
+
+Each task does one thing:
+
+```rust
+#[embassy_executor::task]
+async fn sensor_task(i2c_bus: &'static I2cBus) {
+    loop {
+        let data = read_sensors(i2c_bus).await;
+        SENSOR_CHANNEL.send(data).await;
+        Timer::after_secs(60).await;
+    }
+}
+```
+
+Sensor task reads, display task renders, network task sends, pump task waters. They don't know about each other - just channels. If you've done actor systems or used Tokio channels, this is familiar. That's the point.
+
+First milestone: blink an LED. It worked.
+
+---
+
+## Reality Check
+
+Then I tried to initialize WiFi.
+
+```rust
+let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
+```
+
+The code compiled. The device did nothing. No LED, no logs. Just silence.
+
+### Three Days in GitHub Issues
+
+I tried everything. Different Embassy versions. Secure boot configs. Staring at the code hoping it would fix itself.
+
+Finally, buried in a [GitHub issue](https://github.com/embassy-rs/embassy/issues/3612): the RP2350 runs at 150MHz, not 133MHz like the RP2040. This breaks PIO timing for SPI communication.
+
+The fix was a magic number that took three days to find:
+
+```rust
+// This constant represents mass of time consumed debugging
+const PICO2W_CLOCK_DIVIDER: FixedU32<U8> = FixedU32::from_bits(0x0300);
+```
+
+The other part was recently broken WiFi drivers, so I had to roll back and pin to working commits. It's hard to be a pioneer. But I'm not really one - those who write these drivers are the ones who rock.
+
+### The TLS Situation
+
+My server is behind Cloudflare. No HTTPS, no connection. I used [reqwless](https://github.com/drogue-iot/reqwless) with `embedded-tls`.
+
+```rust
+let mut tls_read_buffer = [0u8; 16640];
+let mut tls_write_buffer = [0u8; 16640];
+```
+
+33KB just for TLS buffers. 6% of my total RAM for one HTTPS connection.
+
+It worked. Barely, but it worked.
+
+Yes, I know MQTT exists. Yes, I know a home server with a broker would skip TLS on microcontroller entirely. That's the plan for version 2: add more infrastructure to water a plant. The solution to overengineering is always more engineering.
+
+<Image src={watering3} alt="System in action" />
+
+---
+
+## The Backend (The Easy Part)
+
+After embedded suffering, Rust on a server felt like cheating. [Axum](https://github.com/tokio-rs/axum), [SQLx](https://github.com/launchbadge/sqlx), [Teloxide](https://github.com/teloxide/teloxide) - the whole thing came together in a weekend.
+
+The interesting bits:
+
+**Real-time processing without polling** - PostgreSQL LISTEN/NOTIFY wakes up my code only when new data arrives:
+
+```rust
+let mut listener = PgListener::connect_with(&pool).await?;
+listener.listen("sensor_data").await?;
+
+loop {
+    let notification = listener.recv().await?;
+    process_sensor_data(notification.payload()).await?;
+}
+```
+
+**Power outage detection** - sensor reports every 60 seconds, so silence means trouble. The Pico doesn't send a "dying gasp" - it just stops. A background task on the backend checks `last_reading` every two minutes:
+
+```rust
+let elapsed = (now - last_reading).whole_seconds();
+if elapsed > 150 && !active_outage {
+    db.start_outage().await?;
+    alerter.broadcast("Power outage detected!").await?;
+}
+```
+
+**Detecting *absence* is philosophically weird - you're looking for something that isn't there.** The system knows power is off because it knows when it isn't. [The missile guidance approach to plant care.](https://www.youtube.com/watch?v=bZe5J8SVCYQ)
+
+---
+
+## The Moment It All Connected
+
+First time I saw this in my database:
+
+```json
+{"temperature": 23.5, "humidity": 45.2, "pressure": 1013.25, "soil_moisture": 67}
+```
+
+...sent from a chip the size of my thumb, through WiFi, through Cloudflare, into PostgreSQL - I screenshot everything. Sent it to friends who definitely didn't care but pretended to.
+
+First Telegram notification while away from home:
+
+> Soil moisture is low (28%). Consider watering.
+
+<Image src={watering4} alt="Telegram bot interface" />
+
+---
+
+## What "Full Stack Rust" Actually Means
+
+I expected shared code between firmware and backend. Common types, validation logic.
+
+Reality: almost zero shared code.
+
+But Embassy and Tokio feel almost identical:
+
+| Embedded (Embassy) | Backend (Tokio) |
+|-------------------|-----------------|
+| `#[embassy_executor::task]` | `#[tokio::main]` |
+| `Timer::after_secs(30).await` | `sleep(Duration::from_secs(30)).await` |
+| `CHANNEL.send(data).await` | `tx.send(data).await` |
+| `spawner.spawn(task())` | `tokio::spawn(task())` |
+
+Same patterns. Same intuition. Different worlds. The cognitive load of switching is near zero. When I changed a struct on the backend and forgot the firmware, SQLx's compile-time checks caught it.
+
+That's what "full stack" actually gave me - not shared code, but **shared mental model**.
+
+---
+
+## Hindsight
+
+**What Rust gave me:** Confidence. If it compiles, it probably works. Same tooling everywhere. Fearless concurrency on both ends.
+
+**What it cost:** Compile times. Ecosystem churn (Embassy moves faster than its docs). The embedded learning curve is real - `no_std` is a different world. But Embassy is magic, giving a dumb web developer like me the ability to write bare metal code. One of the best feelings I've ever had.
+
+**What I'd do differently:** Use MQTT. (No) Add OTA updates. (Maybe) Fix the ultrasonic sensor. (Or just admit I never will)
+
+---
+
+## Was It Worth It?
+
+My plants now have better monitoring than most production systems I've worked on. Real-time data in PostgreSQL, alerting with quiet hours, power outage detection, remote control via Telegram.
+
+Total cost: ~$20 in hardware, mass(time). The plants are alive. That's more than I can say for my previous attempts at gardening.
+
+All because I wanted to water my plants from my phone without getting up.
+
+Is it overkill? Obviously.
+
+Would I do it again? Already planning version 2.
+
+*(For future employers reading this: Am I prone to overengineering? Obviously not. This is a perfectly reasonable amount of infrastructure for watering a plant.)*
+
+---
+
+*The code is on GitHub if you want to steal ideas or judge my life choices: [firmware](https://github.com/ihorandrianov/auto-watering) and [backend](https://github.com/ihorandrianov/my-website). Just don't blame me if your plants die anyway - I'm a software developer, not a botanist.*
