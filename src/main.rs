@@ -48,6 +48,11 @@ async fn main() {
         .await
         .expect("Failed to run migrations");
 
+    let client = reqwest::Client::builder()
+        .local_address(IpAddr::from_str("0.0.0.0").unwrap()) // <--- THE FIX
+        .build()
+        .expect("Failed to build client");
+
     let db = Db::new(pool.clone());
     let bot = Arc::new(Bot::from_env());
 

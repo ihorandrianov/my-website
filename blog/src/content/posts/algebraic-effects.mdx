@@ -1,0 +1,94 @@
+---
+title: "Algebraic Effects"
+description: "Interactive playground for exploring algebraic effects in JavaScript"
+date: 2026-01-12
+tags: ["rust", "javascript", "wasm", "effects"]
+---
+
+import KryhtaPlayground from '../../components/KryhtaPlayground.tsx';
+
+# Algebraic Effects
+
+[KryhtaJS](https://github.com/ihorandrianov/kryhtajs) is a tiny JavaScript engine with algebraic effects, written in Rust and compiled to WebAssembly. It extends JavaScript with:
+
+- **`perform Effect!(args)`** — trigger an effect and capture the continuation
+- **`handle { } with { }`** — catch effects and decide how to resume
+- **`resume(value)`** — one-shot continuation that resumes execution
+- **First-class handlers** — store and reuse effect handlers
+
+## Try It
+
+<KryhtaPlayground client:only="react" />
+
+## Generator Pattern
+
+Effects make generators trivial. No special syntax needed — just `Yield!` as an effect:
+
+<KryhtaPlayground
+  client:only="react"
+  initialCode={`// Generator with Yield! effect
+function numbers(n) {
+  let i = 0;
+  while (i < n) {
+    perform Yield!(i);
+    i = i + 1;
+  }
+}
+
+// Consumer handles yields
+handle {
+  numbers(5)
+} with {
+  Yield!(value, resume) -> {
+    perform Print!("yielded:", value);
+    resume(undefined)
+  }
+}`}
+/>
+
+## Mutable State
+
+State as a pattern, not a primitive. The handler threads state through continuations:
+
+<KryhtaPlayground
+  client:only="react"
+  initialCode={`// Mutable cell using effects
+let result = handle {
+  perform Set!(10);
+  let x = perform Get!();
+  perform Set!(x * 2);
+  perform Get!()
+} with {
+  Set!(v, resume) -> (s) => resume(undefined)(v),
+  Get!(resume) -> (s) => resume(s)(s),
+  return(x) -> (s) => x
+}(0);
+
+perform Print!("Final value:", result);
+result`}
+/>
+
+## Early Exit
+
+Don't call `resume` and the computation stops. Clean, composable control flow:
+
+<KryhtaPlayground
+  client:only="react"
+  initialCode={`// Early termination - stop after finding 3
+handle {
+  let i = 0;
+  while (i < 100) {
+    if (i === 3) {
+      perform Exit!(i)
+    }
+    perform Print!("checking", i);
+    i = i + 1;
+  }
+  "not found"
+} with {
+  Exit!(value, resume) -> {
+    perform Print!("found it!");
+    value  // return without resuming
+  }
+}`}
+/>
