@@ -20,34 +20,35 @@ const kryhtaHighlighter = ViewPlugin.fromClass(
       }
     }
     buildDecorations(view: EditorView) {
-      const decorations: { from: number; to: number; decoration: Decoration }[] = [];
+      const ranges: { from: number; to: number; mark: Decoration }[] = [];
       const text = view.state.doc.toString();
 
       for (const match of text.matchAll(effectKeywords)) {
-        decorations.push({
+        ranges.push({
           from: match.index!,
           to: match.index! + match[0].length,
-          decoration: Decoration.mark({ class: 'cm-effect-keyword' }),
+          mark: Decoration.mark({ class: 'cm-effect-keyword' }),
         });
       }
 
       for (const match of text.matchAll(effectNames)) {
-        decorations.push({
+        ranges.push({
           from: match.index!,
           to: match.index! + match[0].length,
-          decoration: Decoration.mark({ class: 'cm-effect-name' }),
+          mark: Decoration.mark({ class: 'cm-effect-name' }),
         });
       }
 
       for (const match of text.matchAll(handlerArrow)) {
-        decorations.push({
+        ranges.push({
           from: match.index!,
           to: match.index! + match[0].length,
-          decoration: Decoration.mark({ class: 'cm-handler-arrow' }),
+          mark: Decoration.mark({ class: 'cm-handler-arrow' }),
         });
       }
 
-      return Decoration.set(decorations.sort((a, b) => a.from - b.from));
+      ranges.sort((a, b) => a.from - b.from);
+      return Decoration.set(ranges.map(r => r.mark.range(r.from, r.to)));
     }
   },
   { decorations: (v) => v.decorations }
@@ -63,22 +64,114 @@ type KryhtaModule = {
   evaluate: (source: string) => string;
 };
 
-const DEFAULT_CODE = `// Algebraic effects in action!
-let result = handle {
-  let x = perform Get!();
-  perform Put!(x + 1);
-  perform Get!()
-} with {
-  Get!(resume) -> resume(42),
-  Put!(value, resume) -> resume(value * 2),
-  return(x) -> x
+const EXAMPLES: Record<string, string> = {
+  default: [
+    '// Ask for values and sum them',
+    'let result = handle {',
+    '  let x = perform Ask!("first");',
+    '  let y = perform Ask!("second");',
+    '  x + y',
+    '} with {',
+    '  Ask!(label, resume) -> {',
+    '    perform Print!("asking for", label);',
+    '    resume(21)',
+    '  },',
+    '  return(x) -> x',
+    '};',
+    '',
+    'perform Print!("sum:", result);',
+    'result',
+  ].join('\n'),
+
+  generator: [
+    '// Generator with Yield! effect',
+    'function numbers(n) {',
+    '  let i = 0;',
+    '  while (i < n) {',
+    '    perform Yield!(i);',
+    '    i = i + 1;',
+    '  }',
+    '}',
+    '',
+    '// Consumer handles yields',
+    'handle {',
+    '  numbers(5)',
+    '} with {',
+    '  Yield!(value, resume) -> {',
+    '    perform Print!("yielded:", value);',
+    '    resume(undefined)',
+    '  }',
+    '}',
+  ].join('\n'),
+
+  state: [
+    '// Mutable cell using effects',
+    'let result = handle {',
+    '  perform Set!(10);',
+    '  let x = perform Get!();',
+    '  perform Set!(x * 2);',
+    '  perform Get!()',
+    '} with {',
+    '  Set!(v, resume) -> (s) => resume(undefined)(v),',
+    '  Get!(resume) -> (s) => resume(s)(s),',
+    '  return(x) -> (s) => x',
+    '}(0);',
+    '',
+    'perform Print!("Final value:", result);',
+    'result',
+  ].join('\n'),
+
+  exit: [
+    '// Early termination - stop after finding 3',
+    'handle {',
+    '  let i = 0;',
+    '  while (i < 100) {',
+    '    if (i === 3) {',
+    '      perform Exit!(i)',
+    '    }',
+    '    perform Print!("checking", i);',
+    '    i = i + 1;',
+    '  }',
+    '  "not found"',
+    '} with {',
+    '  Exit!(value, resume) -> {',
+    '    perform Print!("found it!");',
+    '    value',
+    '  }',
+    '}',
+  ].join('\n'),
+
+  handler: [
+    '// Handler as a value',
+    'let counter = handler {',
+    '  Inc!(resume) -> (n) => resume(undefined)(n + 1),',
+    '  Dec!(resume) -> (n) => resume(undefined)(n - 1),',
+    '  Get!(resume) -> (n) => resume(n)(n),',
+    '  return(x) -> (n) => x',
+    '};',
+    '',
+    '// Reuse the same handler',
+    'let result1 = handle {',
+    '  perform Inc!();',
+    '  perform Inc!();',
+    '  perform Get!()',
+    '} with counter;',
+    '',
+    'let result2 = handle {',
+    '  perform Inc!();',
+    '  perform Dec!();',
+    '  perform Dec!();',
+    '  perform Get!()',
+    '} with counter;',
+    '',
+    'perform Print!("counter1:", result1(0));',
+    'perform Print!("counter2:", result2(0));',
+    '"done"',
+  ].join('\n'),
 };
 
-perform Print!("Result:", result);
-result`;
-
-export default function KryhtaPlayground({ initialCode }: { initialCode?: string }) {
-  const [code, setCode] = useState(initialCode || DEFAULT_CODE);
+export default function KryhtaPlayground({ example = 'default' }: { example?: string }) {
+  const [code, setCode] = useState(EXAMPLES[example] || EXAMPLES.default);
   const [output, setOutput] = useState<string[]>([]);
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(true);
