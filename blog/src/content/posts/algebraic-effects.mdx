@@ -11,18 +11,35 @@ import KryhtaPlayground from '../../components/KryhtaPlayground.tsx';
 
 [KryhtaJS](https://github.com/ihorandrianov/kryhtajs) is a tiny JavaScript engine with algebraic effects, written in Rust and compiled to WebAssembly. It extends JavaScript with:
 
-- **`perform Effect!(args)`** — trigger an effect and capture the continuation
-- **`handle { } with { }`** — catch effects and decide how to resume
-- **`resume(value)`** — one-shot continuation that resumes execution
-- **First-class handlers** — store and reuse effect handlers
+- **`perform Effect!(args)`** triggers an effect and captures the continuation
+- **`handle { } with { }`** catches effects and decides how to resume
+- **`resume(value)`** is a one-shot continuation that resumes execution
+- **First-class handlers** can be stored and reused
 
 ## Try It
 
-<KryhtaPlayground client:only="react" />
+<KryhtaPlayground
+  client:only="react"
+  initialCode={`// Ask for a value, double it, ask again
+let result = handle {
+  let x = perform Ask!("first");
+  let y = perform Ask!("second");
+  x + y
+} with {
+  Ask!(label, resume) -> {
+    perform Print!("asking for", label);
+    resume(21)
+  },
+  return(x) -> x
+};
+
+perform Print!("sum:", result);
+result`}
+/>
 
 ## Generator Pattern
 
-Effects make generators trivial. No special syntax needed — just `Yield!` as an effect:
+Effects can implement generators without special syntax. `Yield!` is just another effect:
 
 <KryhtaPlayground
   client:only="react"
@@ -48,7 +65,7 @@ handle {
 
 ## Mutable State
 
-State as a pattern, not a primitive. The handler threads state through continuations:
+State can be implemented as a pattern. The handler threads state through continuations:
 
 <KryhtaPlayground
   client:only="react"
@@ -70,7 +87,7 @@ result`}
 
 ## Early Exit
 
-Don't call `resume` and the computation stops. Clean, composable control flow:
+If you don't call `resume`, the computation stops:
 
 <KryhtaPlayground
   client:only="react"
@@ -91,4 +108,37 @@ handle {
     value  // return without resuming
   }
 }`}
+/>
+
+## First-Class Handlers
+
+Handlers are values. You can store them in variables and reuse them:
+
+<KryhtaPlayground
+  client:only="react"
+  initialCode={`// Handler as a value
+let counter = handler {
+  Inc!(resume) -> (n) => resume(undefined)(n + 1),
+  Dec!(resume) -> (n) => resume(undefined)(n - 1),
+  Get!(resume) -> (n) => resume(n)(n),
+  return(x) -> (n) => x
+};
+
+// Reuse the same handler
+let result1 = handle {
+  perform Inc!();
+  perform Inc!();
+  perform Get!()
+} with counter;
+
+let result2 = handle {
+  perform Inc!();
+  perform Dec!();
+  perform Dec!();
+  perform Get!()
+} with counter;
+
+perform Print!("counter1:", result1(0));
+perform Print!("counter2:", result2(0));
+"done"`}
 />
