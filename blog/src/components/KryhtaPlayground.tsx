@@ -168,6 +168,28 @@ const EXAMPLES: Record<string, string> = {
     'perform Print!("counter2:", result2(0));',
     '"done"',
   ].join('\n'),
+
+  fibers: [
+    '// Cooperative concurrency with fibers',
+    'let id1 = perform Fork!(() => {',
+    '  perform Print!("fiber 1 running");',
+    '  100',
+    '});',
+    '',
+    'let id2 = perform Fork!(() => {',
+    '  perform Print!("fiber 2 running");',
+    '  200',
+    '});',
+    '',
+    'perform Print!("main: spawned fibers", id1, id2);',
+    '',
+    '// Wait for results',
+    'let r1 = perform Join!(id1);',
+    'let r2 = perform Join!(id2);',
+    '',
+    'perform Print!("results:", r1, r2);',
+    'r1 + r2',
+  ].join('\n'),
 };
 
 export default function KryhtaPlayground({ example = 'default' }: { example?: string }) {

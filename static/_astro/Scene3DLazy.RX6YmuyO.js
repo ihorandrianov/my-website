@@ -1,0 +1,2 @@
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["_astro/Scene3D.Du0LfBFl.js","_astro/jsx-runtime.DWDKWqIC.js","_astro/index.1QzT879p.js","_astro/extends.CF3RwP-h.js"])))=>i.map(i=>d[i]);
+import{_ as r,j as e}from"./jsx-runtime.DWDKWqIC.js";import{r as t}from"./index.1QzT879p.js";const s=t.lazy(()=>r(()=>import("./Scene3D.Du0LfBFl.js"),__vite__mapDeps([0,1,2,3])));function i(){return e.jsx(t.Suspense,{fallback:e.jsx("div",{style:{width:"100%",height:"100%"}}),children:e.jsx(s,{})})}export{i as default};

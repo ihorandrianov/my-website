@@ -43,3 +43,9 @@ If you don't call `resume`, the computation stops:
 Handlers are values. You can store them in variables and reuse them:
 
 <KryhtaPlayground client:only="react" example="handler" />
+
+## Fibers
+
+Effects enable cooperative concurrency without threads. `Fork!` spawns a fiber, `Join!` waits for it:
+
+<KryhtaPlayground client:only="react" example="fibers" />
